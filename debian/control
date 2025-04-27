@@ -1,15 +1,61 @@
-Source: template-repository
-Section: unknown
+Source: ecryptfs-utils
+Section: misc
 Priority: optional
-Maintainer: Tsic404 <liuheng@deepin.org>
-Build-Depends: debhelper (>= 11)
-Standards-Version: 4.1.3
-Homepage: https://github.com/deepin-community/template-repository
-#Vcs-Browser: https://salsa.debian.org/debian/deepin-community-template-repository
-#Vcs-Git: https://salsa.debian.org/debian/deepin-community-template-repository.git
+Maintainer: Laszlo Boszormenyi (GCS) <gcs@debian.org>
+Uploaders: Filesystems Group <filesystems-devel@lists.alioth.debian.org>
+Build-Depends:
+ debhelper-compat (= 13), distro-info, intltool,
+ libglib2.0-dev, libgpg-error-dev, libgpgme-dev, libkeyutils-dev,
+ libnss3-dev, libpam0g-dev, pkgconf, swig, libtspi-dev
+Standards-Version: 4.7.0
+Rules-Requires-Root: no
+Homepage: https://launchpad.net/ecryptfs
 
-Package: template-repository
-Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: <insert up to 60 chars description>
- <insert long description, indented with spaces>
+Package: ecryptfs-utils
+Section: misc
+Architecture: linux-any
+Depends:
+ ${misc:Depends}, ${shlibs:Depends}, gettext-base, keyutils,
+ libpam-runtime
+Suggests: cryptsetup, rsync
+Description: ecryptfs cryptographic filesystem (utilities)
+ eCryptfs is a POSIX-compliant enterprise-class stacked cryptographic
+ filesystem for Linux.
+ .
+ It provides advanced key management and policy features. eCryptfs stores
+ cryptographic metadata in the header of each file written, so that encrypted
+ files can be copied between hosts; the file will be decryptable with the
+ proper key, and there is no need to keep track of any additional information
+ aside from what is already in the encrypted file itself. Think of eCryptfs as
+ a sort of "gnupgfs".
+ .
+ eCryptfs is a native Linux filesystem. The kernel module component of
+ eCryptfs is part of the Linux kernel since 2.6.19.
+ .
+ This package contains the userland utilities.
+
+Package: libecryptfs1
+Section: libs
+Architecture: linux-any
+Multi-Arch: same
+Pre-Depends: ${misc:Pre-Depends}
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Conflicts: libecryptfs0
+Replaces: libecryptfs0
+Description: ecryptfs cryptographic filesystem (library)
+ eCryptfs is a POSIX-compliant enterprise-class stacked cryptographic
+ filesystem for Linux.
+ .
+ This package contains the library.
+
+Package: libecryptfs-dev
+Section: libdevel
+Architecture: linux-any
+Depends:
+ ${misc:Depends}, libecryptfs1 (= ${binary:Version}), libgpg-error-dev,
+ libgpgme11-dev, libkeyutils-dev, libpam0g-dev, libtspi-dev
+Description: ecryptfs cryptographic filesystem (development)
+ eCryptfs is a POSIX-compliant enterprise-class stacked cryptographic
+ filesystem for Linux.
+ .
+ This package contains the development files.

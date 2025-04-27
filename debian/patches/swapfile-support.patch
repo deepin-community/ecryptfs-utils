@@ -1,0 +1,40 @@
+From: Alberto Pianon <alberto@pianon.eu>
+Subject: Fix to make the script work with swapfiles and to use the right script to start encrypted swap
+Bug-Ubuntu: https://launchpad.net/bugs/1670336
+Last-Update: 2017-09-25
+
+--- ecryptfs-utils-111.orig/src/utils/ecryptfs-setup-swap
++++ ecryptfs-utils-111/src/utils/ecryptfs-setup-swap
+@@ -150,7 +150,7 @@ for swap in $swaps; do
+ 	info `gettext "Setting up swap:"` "[$swap]"
+ 	uuid=$(blkid -o value -s UUID $swap)
+ 	# /etc/fstab might use a symlink like /dev/mapper/ubuntu--vg-swap_1
+-	links=$(for d in $(udevadm info --query=symlink -n $swap); do echo /dev/$d; done)
++        [ -f $swap ] || links=$(for d in $(udevadm info --query=symlink -n $swap); do echo /dev/$d; done)
+ 	for target in "UUID=$uuid" $swap $links; do
+ 		if [ -n "$target" ] && grep -qs "^$target\s\+" /etc/fstab; then
+ 			sed -i "s:^$target\s\+:\#$target :" /etc/fstab
+@@ -193,7 +193,11 @@ for swap in $swaps; do
+ 	# Add crypttab entry
+ 	# Use /dev/urandom, since this is not a long lived key (generated each boot),
+ 	# and so that we don't block booting while waiting for entropy
+-	echo "cryptswap$i UUID=$uuid /dev/urandom swap,offset=1024,cipher=aes-xts-plain64" >> /etc/crypttab
++	if [ -f $swap ]; then  # swapfile
++		echo "cryptswap$i $swap /dev/urandom swap,offset=1024,cipher=aes-xts-plain64" >> /etc/crypttab
++	else                   # partition
++		echo "cryptswap$i UUID=$uuid /dev/urandom swap,offset=1024,cipher=aes-xts-plain64" >> /etc/crypttab
++	fi
+ 
+ 	# Add fstab entry
+ 	echo "/dev/mapper/cryptswap$i none swap sw 0 0" >> /etc/fstab
+@@ -203,8 +207,8 @@ if [ "$NO_RELOAD" != 1 ]; then
+ 	# Turn swap off
+ 	swapoff -a
+ 
+-	# Restart cryptdisks
+-	/etc/init.d/cryptdisks restart
++	# Restart cryptsetup
++	systemctl restart cryptsetup.target
+ 
+ 	# Turn the swap on
+ 	swapon -a

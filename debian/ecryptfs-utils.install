@@ -1,0 +1,8 @@
+sbin/* usr/sbin/
+usr/bin
+usr/lib/*/ecryptfs
+usr/lib/*/security
+usr/share/doc
+usr/share/ecryptfs-utils
+usr/share/locale
+usr/share/man

@@ -1,0 +1,38 @@
+Description: ecryptfs-setup-swap: Handle nvme and mmc swap partitions
+ Prevent unencrypted swap partitions from being automatically enabled by
+ systemd. This bug affected GPT partitioned NVMe/MMC drives and resulted in the
+ swap partition being used without encryption. It also resulted in a usability
+ issue in that users were erroneously prompted to enter a pass-phrase to unlock
+ their swap partition at boot. (LP: #1597154)
+Origin: backport, http://bazaar.launchpad.net/~ecryptfs/ecryptfs/trunk/revision/882
+Origin: backport, http://bazaar.launchpad.net/~ecryptfs/ecryptfs/trunk/revision/884
+Author: Jason Gerard DeRose <jason@system76.com>
+Author: Tyler Hicks <tyhicks@canonical.com>
+Bug: https://launchpad.net/bugs/1597154
+
+Index: ecryptfs-utils-111/src/utils/ecryptfs-setup-swap
+===================================================================
+--- ecryptfs-utils-111.orig/src/utils/ecryptfs-setup-swap
++++ ecryptfs-utils-111/src/utils/ecryptfs-setup-swap
+@@ -165,9 +165,19 @@ for swap in $swaps; do
+ 
+ 	# If this is a GPT partition, mark it as no-auto mounting, to avoid
+ 	# auto-activating it on boot
++	#
++	# IMPORTANT: Much of this code is duplicated in
++	# debian/ecryptfs-utils.postinst. Please keep the two in sync when
++	# making any changes.
+ 	if [ "$(blkid -p -s PART_ENTRY_SCHEME -o value "$swap")" = "gpt" ]; then
+-		drive="${swap%[0-9]*}"
+-		partno="${swap#$drive}"
++		# Correctly handle NVMe/MMC drives, as well as any similar physical
++		# block device that follow the "/dev/foo0p1" pattern (LP: #1597154)
++		if echo "$swap" | grep -qE "^/dev/.+[0-9]+p[0-9]+$"; then
++			drive=$(echo "$swap" | sed "s:\(.\+[0-9]\)p[0-9]\+:\1:")
++		else
++			drive=$(echo "$swap" | sed "s:\(.\+[^0-9]\)[0-9]\+:\1:")
++		fi
++		partno=$(echo "$swap" | sed "s:.\+[^0-9]\([0-9]\+\):\1:")
+ 		if [ -b "$drive" ]; then
+ 			if printf "x\np\n" | fdisk "$drive" | grep -q "^$swap .* GUID:.*\b63\b"; then
+ 				echo "$swap is already marked as no-auto"
