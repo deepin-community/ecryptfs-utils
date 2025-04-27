@@ -1,0 +1,4 @@
+set-up-encrypted-swap-on-nvme-and-mmc.patch
+use-pkg-config_gpgme.diff
+swapfile-support.patch
+fix-type.patch
